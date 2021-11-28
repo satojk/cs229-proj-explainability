@@ -60,7 +60,7 @@ def main():
     momentum = 0.9
     num_epochs = 50
     model, training_history = utils.train_nn(model, train_X, train_y, valid_X, valid_y,
-            batch_size, criterion, lr, momentum, num_epochs, NN_NAME)
+            batch_size, criterion, lr, momentum, num_epochs, NN_NAME, device)
 
 if __name__ == '__main__':
     main()

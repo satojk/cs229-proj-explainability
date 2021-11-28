@@ -150,7 +150,7 @@ def get_fc_nn(layer_sizes, activation, device):
     return nn.Sequential(*layers)
 
 def train_nn(model, train_x, train_y, valid_x, valid_y, batch_size, criterion,
-             lr, momentum, num_epochs, model_name):
+             lr, momentum, num_epochs, model_name, device):
     '''
     Train a neural network using Stochastic Gradient Descent.
 
@@ -189,7 +189,7 @@ def train_nn(model, train_x, train_y, valid_x, valid_y, batch_size, criterion,
     }
 
     now = datetime.now()
-    train_loss, train_acc, train_auc, valid_loss, valid_acc, valid_auc = eval_nn(model, train_x, train_y, valid_x, valid_y, criterion)
+    train_loss, train_acc, train_auc, valid_loss, valid_acc, valid_auc = eval_nn(model, train_x, train_y, valid_x, valid_y, criterion, device)
     print(f'{now} \t[epoch 0]\ttrain L: {train_loss:.3f}\tvalid L: {valid_loss:.3f}\ttrain Ac: {train_acc:.3f}\tvalid Ac: {valid_acc:.3f}\ttrain Au: {train_auc:.3f}\tvalid Au: {valid_auc:.3f}', flush=True)
     training_history['epoch'].append(0)
     training_history['train_loss'].append(train_loss.item())
@@ -215,7 +215,7 @@ def train_nn(model, train_x, train_y, valid_x, valid_y, batch_size, criterion,
 
         # print statistics
         now = datetime.now()
-        train_loss, train_acc, train_auc, valid_loss, valid_acc, valid_auc = eval_nn(model, train_x, train_y, valid_x, valid_y, criterion)
+        train_loss, train_acc, train_auc, valid_loss, valid_acc, valid_auc = eval_nn(model, train_x, train_y, valid_x, valid_y, criterion, device)
         print(f'{now} \t[epoch {epoch+1}]\ttrain L: {train_loss:.3f}\tvalid L: {valid_loss:.3f}\ttrain Ac: {train_acc:.3f}\tvalid Ac: {valid_acc:.3f}\ttrain Au: {train_auc:.3f}\tvalid Au: {valid_auc:.3f}', flush=True)
         training_history['epoch'].append(epoch+1)
         training_history['train_loss'].append(train_loss.item())
@@ -234,11 +234,16 @@ def train_nn(model, train_x, train_y, valid_x, valid_y, batch_size, criterion,
         f.write(json.dumps(training_history))
     return model, training_history
 
-def eval_nn(model, train_x, train_y, test_x, test_y, criterion):
+def eval_nn(model, train_x, train_y, test_x, test_y, criterion, device):
     '''
     Evaluate a given model according to accuracy, the training criterion, and
     AUC for both train set and a test set.
     '''
+    model.to(torch.device('cpu'))
+    train_x = train_x.cpu()
+    train_y = train_y.cpu()
+    test_x = test_x.cpu()
+    test_y = test_y.cpu()
     train_out = model(train_x).squeeze(1)
     test_out = model(test_x).squeeze(1)
     train_loss = criterion(train_out, train_y)
@@ -247,6 +252,7 @@ def eval_nn(model, train_x, train_y, test_x, test_y, criterion):
     test_acc = sum(torch.round(test_out) == test_y) / test_x.shape[0]
     train_auc = roc_auc_score(train_y.cpu(), train_out.cpu().detach().numpy())
     test_auc = roc_auc_score(test_y.cpu(), test_out.cpu().detach().numpy())
+    model.to(device)
     return (train_loss, train_acc, train_auc, test_loss, test_acc, test_auc)
 
 def load_nn(model, path):
