@@ -216,7 +216,7 @@ def train_nn(model, train_x, train_y, valid_x, valid_y, batch_size, criterion,
         # print statistics
         now = datetime.now()
         train_loss, train_acc, train_auc, valid_loss, valid_acc, valid_auc = eval_nn(model, train_x, train_y, valid_x, valid_y, criterion)
-        print(f'{now} \t[epoch {epoch}]\ttrain L: {train_loss:.3f}\tvalid L: {valid_loss:.3f}\ttrain Ac: {train_acc:.3f}\tvalid Ac: {valid_acc:.3f}\ttrain Au: {train_auc:.3f}\tvalid Au: {valid_auc:.3f}', flush=True)
+        print(f'{now} \t[epoch {epoch+1}]\ttrain L: {train_loss:.3f}\tvalid L: {valid_loss:.3f}\ttrain Ac: {train_acc:.3f}\tvalid Ac: {valid_acc:.3f}\ttrain Au: {train_auc:.3f}\tvalid Au: {valid_auc:.3f}', flush=True)
         training_history['epoch'].append(epoch+1)
         training_history['train_loss'].append(train_loss.item())
         training_history['train_acc'].append(train_acc.item())
