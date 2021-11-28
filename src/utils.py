@@ -188,7 +188,7 @@ def train_nn(model, train_x, train_y, valid_x, valid_y, batch_size, criterion,
     }
     train_loss, train_acc, train_auc, valid_loss, valid_acc, valid_auc = eval_nn(model, train_x, train_y, valid_x, valid_y, criterion)
     print('[epoch %d]\ttrain L: %.3f\tvalid L: %.3f\ttrain Ac: %.3f\tvalid Ac: %.3f\ttrain Au: %.3f\tvalid Au: %.3f' %
-          (0, train_loss, valid_loss, train_acc, valid_acc, train_auc, valid_auc))
+          (0, train_loss, valid_loss, train_acc, valid_acc, train_auc, valid_auc), flush=True)
     training_history['epoch'].append(0)
     training_history['train_loss'].append(train_loss.item())
     training_history['train_acc'].append(train_acc.item())
@@ -214,7 +214,7 @@ def train_nn(model, train_x, train_y, valid_x, valid_y, batch_size, criterion,
         # print statistics
         train_loss, train_acc, train_auc, valid_loss, valid_acc, valid_auc = eval_nn(model, train_x, train_y, valid_x, valid_y, criterion)
         print('[epoch %d]\ttrain L: %.3f\tvalid L: %.3f\ttrain Ac: %.3f\tvalid Ac: %.3f\ttrain Au: %.3f\tvalid Au: %.3f' %
-              (epoch + 1, train_loss, valid_loss, train_acc, valid_acc, train_auc, valid_auc))
+              (epoch + 1, train_loss, valid_loss, train_acc, valid_acc, train_auc, valid_auc), flush=True)
         training_history['epoch'].append(epoch+1)
         training_history['train_loss'].append(train_loss.item())
         training_history['train_acc'].append(train_acc.item())
