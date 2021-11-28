@@ -8,7 +8,7 @@ VALID_PATH = '../data/application_data_valid.csv'
 TEST_PATH = '../data/application_data_test.csv'
 MINI_PATH = '../data/application_data_mini.csv'
 
-NN_LAYERS = [244, 900, 1]
+NN_LAYERS = [205, 900, 1]
 NONLINEARITY = nn.Sigmoid
 NN_NAME = 'mini_test'
 
@@ -40,23 +40,25 @@ def curriculum_train(model, train_x, train_y, valid_x, valid_y, batch_size,
 
 
 def main():
-    (train_X, train_y) = utils.get_data_alt(MINI_PATH)
-    (valid_X, valid_y) = utils.get_data_alt(VALID_PATH)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print('Using device:', device)
+    (train_X, train_y) = utils.get_data_alt(MINI_PATH, remove_outliers=True, remove_correlated_columns=True, device=device)
+    (valid_X, valid_y) = utils.get_data_alt(VALID_PATH, remove_correlated_columns=True, device=device)
     print('TRAIN SHAPES')
     print(train_X.shape)
     print(train_y.shape)
     print('VALIDATION SHAPES')
     print(valid_X.shape)
     print(valid_y.shape)
-    print(f'Training networkd with {NN_LAYERS} layers, {NONLINEARITY} nonlinearity, {NN_NAME} name.')
+    print(f'Training network with {NN_LAYERS} layers, {NONLINEARITY} nonlinearity, {NN_NAME} name.')
 
-    model = utils.get_fc_nn(NN_LAYERS, NONLINEARITY)
+    model = utils.get_fc_nn(NN_LAYERS, NONLINEARITY, device)
 
     batch_size = 1
     criterion = nn.BCELoss()
     lr = 0.001
     momentum = 0.9
-    num_epochs = 15
+    num_epochs = 50
     model, training_history = utils.train_nn(model, train_X, train_y, valid_X, valid_y,
             batch_size, criterion, lr, momentum, num_epochs, NN_NAME)
 
