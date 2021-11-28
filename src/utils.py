@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import roc_auc_score
 
 ALL_DATA_PATH = '../data/application_data.csv'
 
@@ -169,8 +170,10 @@ def train_nn(model, train_x, train_y, valid_x, valid_y, batch_size, criterion,
         'epoch': [],
         'train_acc': [],
         'train_loss': [],
+        'train_auc': [],
         'valid_acc': [],
         'valid_loss': [],
+        'valid_auc': [],
     }
     for epoch in range(num_epochs):
         i = 0
@@ -188,15 +191,16 @@ def train_nn(model, train_x, train_y, valid_x, valid_y, batch_size, criterion,
             batch_start += batch_size
 
         # print statistics
-        train_loss, train_acc, valid_loss, valid_acc = eval_nn(model,
-                train_x, train_y, valid_x, valid_y, criterion)
-        print('[epoch %d]\ttrain L: %.3f\tvalid L: %.3f\ttrain A: %.3f\tvalid A: %.3f' %
-              (epoch + 1, train_loss, valid_loss, train_acc, valid_acc))
+        train_loss, train_acc, train_auc, valid_loss, valid_acc, valid_auc = eval_nn(model, train_x, train_y, valid_x, valid_y, criterion)
+        print('[epoch %d]\ttrain L: %.3f\tvalid L: %.3f\ttrain Ac: %.3f\tvalid Ac: %.3f\ttrain Au: %.3f\tvalid Au: %.3f' %
+              (epoch + 1, train_loss, valid_loss, train_acc, valid_acc, train_auc, valid_auc))
         training_history['epoch'].append(epoch)
-        training_history['train_acc'].append(train_acc.item())
         training_history['train_loss'].append(train_loss.item())
+        training_history['train_acc'].append(train_acc.item())
+        training_history['train_auc'].append(train_loss.item())
         training_history['valid_loss'].append(valid_loss.item())
         training_history['valid_acc'].append(valid_acc.item())
+        training_history['valid_auc'].append(valid_acc.item())
 
         if epoch % 10 == 0:
             torch.save(model.state_dict(), f'saved_models/{model_name}_{epoch}.torch')
@@ -209,14 +213,18 @@ def train_nn(model, train_x, train_y, valid_x, valid_y, batch_size, criterion,
 
 def eval_nn(model, train_x, train_y, test_x, test_y, criterion):
     '''
-    Evaluate a given model according to accuracy and the training criterion,
-    for both train set and a test set.
+    Evaluate a given model according to accuracy, the training criterion, and
+    AUC for both train set and a test set.
     '''
-    train_loss = criterion(model(train_x), train_y.unsqueeze(1))
-    train_acc = sum(torch.round(model(train_x)) == train_y.unsqueeze(1)) / train_x.shape[0]
-    test_loss = criterion(model(test_x), test_y.unsqueeze(1))
-    test_acc = sum(torch.round(model(test_x)) == test_y.unsqueeze(1)) / test_x.shape[0]
-    return (train_loss, train_acc, test_loss, test_acc)
+    train_out = model(train_x).squeeze(1)
+    test_out = model(test_x).squeeze(1)
+    train_loss = criterion(train_out, train_y)
+    test_loss = criterion(test_out, test_y)
+    train_acc = sum(torch.round(train_out) == train_y) / train_x.shape[0]
+    test_acc = sum(torch.round(test_out) == test_y) / test_x.shape[0]
+    train_auc = roc_auc_score(train_y, train_out.detach().numpy())
+    test_auc = roc_auc_score(test_y, test_out.detach().numpy())
+    return (train_loss, train_acc, train_auc, test_loss, test_acc, test_auc)
 
 def load_nn(model, path):
     model.load_state_dict(torch.load(path))
