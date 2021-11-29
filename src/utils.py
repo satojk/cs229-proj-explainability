@@ -139,7 +139,7 @@ def get_fc_nn(layer_sizes, activation, device):
     A new instance of a fully connected feedforward neural network.
     '''
     layers = []
-    num_layers = len(layers)
+    num_layers = len(layer_sizes) - 1
     for ix, layer_size in enumerate(layer_sizes[1:]):
         layers.append(nn.Linear(layer_sizes[ix], layer_size, device=device))
         # Only add activation if not last layer. Otherwise, use sigmoid
