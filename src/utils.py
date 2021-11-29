@@ -260,8 +260,9 @@ def load_nn(model, path):
     model.eval()
     return model
 
-def plot_training_history(path):
+def plot_training_history(path, to_remove=[]):
     data = pd.read_json(path, orient='columns')
+    data = data.drop(to_remove, axis=1)
     print(data.head())
     sns.lineplot(x='epoch', y='metric values', hue='metrics', ci=None, data=data.melt('epoch',
         var_name='metrics', value_name='metric values'))
