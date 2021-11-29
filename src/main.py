@@ -10,6 +10,7 @@ MINI_PATH = '../data/application_data_mini.csv'
 
 NN_LAYERS = [205, 900, 1]
 NONLINEARITY = nn.Sigmoid
+DROPOUT = None
 NN_NAME = 'mini_test'
 
 def curriculum_train(model, train_x, train_y, valid_x, valid_y, batch_size,
@@ -50,9 +51,9 @@ def main():
     print('VALIDATION SHAPES')
     print(valid_X.shape)
     print(valid_y.shape)
-    print(f'Training network with {NN_LAYERS} layers, {NONLINEARITY} nonlinearity, {NN_NAME} name.')
+    print(f'Training network with {NN_LAYERS} layers, {NONLINEARITY} nonlinearity, {DROPOUT} dropout, {NN_NAME} name.')
 
-    model = utils.get_fc_nn(NN_LAYERS, NONLINEARITY, device)
+    model = utils.get_fc_nn(NN_LAYERS, NONLINEARITY, device, dropout=DROPOUT)
 
     batch_size = 1
     criterion = nn.BCELoss()

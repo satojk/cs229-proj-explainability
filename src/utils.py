@@ -120,7 +120,7 @@ def get_data(path):
 
     return X, y
 
-def get_fc_nn(layer_sizes, activation, device):
+def get_fc_nn(layer_sizes, activation, device, dropout=None):
     '''
     Instantiate a fully connected feedforward neural network.
 
@@ -145,6 +145,8 @@ def get_fc_nn(layer_sizes, activation, device):
         # Only add activation if not last layer. Otherwise, use sigmoid
         if ix < num_layers - 1:
             layers.append(activation())
+            if dropout is not None:
+                layers.append(nn.Dropout(dropout))
         else:
             layers.append(nn.Sigmoid())
     return nn.Sequential(*layers)
@@ -199,6 +201,7 @@ def train_nn(model, train_x, train_y, valid_x, valid_y, batch_size, criterion,
     training_history['valid_acc'].append(valid_acc.item())
     training_history['valid_auc'].append(valid_auc)
     for epoch in range(num_epochs):
+        model.train()
         i = 0
         batch_start = i * batch_size
         while batch_start < len_train_x:
@@ -239,20 +242,22 @@ def eval_nn(model, train_x, train_y, test_x, test_y, criterion, device):
     Evaluate a given model according to accuracy, the training criterion, and
     AUC for both train set and a test set.
     '''
-    model.to(torch.device('cpu'))
-    train_x = train_x.cpu()
-    train_y = train_y.cpu()
-    test_x = test_x.cpu()
-    test_y = test_y.cpu()
-    train_out = model(train_x).squeeze(1)
-    test_out = model(test_x).squeeze(1)
-    train_loss = criterion(train_out, train_y)
-    test_loss = criterion(test_out, test_y)
-    train_acc = sum(torch.round(train_out) == train_y) / train_x.shape[0]
-    test_acc = sum(torch.round(test_out) == test_y) / test_x.shape[0]
-    train_auc = roc_auc_score(train_y.cpu(), train_out.cpu().detach().numpy())
-    test_auc = roc_auc_score(test_y.cpu(), test_out.cpu().detach().numpy())
-    model.to(device)
+    model.eval()
+    with torch.no_grad():
+        model.to(torch.device('cpu'))
+        train_x = train_x.cpu()
+        train_y = train_y.cpu()
+        test_x = test_x.cpu()
+        test_y = test_y.cpu()
+        train_out = model(train_x).squeeze(1)
+        test_out = model(test_x).squeeze(1)
+        train_loss = criterion(train_out, train_y)
+        test_loss = criterion(test_out, test_y)
+        train_acc = sum(torch.round(train_out) == train_y) / train_x.shape[0]
+        test_acc = sum(torch.round(test_out) == test_y) / test_x.shape[0]
+        train_auc = roc_auc_score(train_y.cpu(), train_out.cpu().detach().numpy())
+        test_auc = roc_auc_score(test_y.cpu(), test_out.cpu().detach().numpy())
+        model.to(device)
     return (train_loss, train_acc, train_auc, test_loss, test_acc, test_auc)
 
 def load_nn(model, path):
