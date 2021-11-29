@@ -99,7 +99,7 @@ def random_undersampling(data, desired_prevalence):
     outflag = 'Randomly Undersampled Dataset'
     return aug_data, outflag
 
-def random_overampling(data, desired_prevalence):
+def random_oversampling(data, desired_prevalence):
     """### Random Oversampling
     * Separates data where target = 1 and target = 0
     * Duplicates samples where target = 1 until the ratio between the two classes is 50-50
@@ -282,16 +282,16 @@ def plotting(model, x_train, y_train, x_test, y_test):
     # confusion matrix
     model.fit(x_train.iloc[:20000,:], y_train[:20000])
     y_hat = model.predict(x_test)
-    cf_matrix = confusion_matrix(y_hat,y_test)
-    ax = sns.heatmap(cf_matrix, annot=True, cmap='Blues')
-    ax.set_title('Random Forest')
-    ax.set_ylabel('\nPredicted Values')
-    ax.set_xlabel('Actual Values ');
+    # cf_matrix = confusion_matrix(y_hat,y_test)
+    # ax = sns.heatmap(cf_matrix, annot=True, cmap='Blues')
+    # ax.set_title('Random Forest')
+    # ax.set_ylabel('\nPredicted Values')
+    # ax.set_xlabel('Actual Values ');
 
     # Add title here
-    importance = model.coef_[0]
-    plt.bar([x for x in range(len(importance))], importance)
-    plt.show()
+    # importance = model.coef_[0]
+    # plt.bar([x for x in range(len(importance))], importance)
+    # plt.show()
 
     # Feature Selection - Only variables that have abs(weight) larger than 0.2
     coefficients = pd.DataFrame(zip(x_train.columns, np.abs(model.coef_[0])), columns = ['variable', 'coeff'])
@@ -316,10 +316,10 @@ def plotting_auc(model2, selected_features, x_test, y_test):
     fpr, tpr, _ = roc_curve(y_test,  y_pred_proba)
 
     #create ROC curve
-    plt.plot(fpr,tpr)
-    plt.ylabel('True Positive Rate')
-    plt.xlabel('False Positive Rate')
-    plt.show()
+    # plt.plot(fpr,tpr)
+    # plt.ylabel('True Positive Rate')
+    # plt.xlabel('False Positive Rate')
+    # plt.show()
     return y_pred_proba
 
 def print_stats(aug_data, outflag, results_xgb, scores2, y_test, y_pred_proba, y_hat):
@@ -373,8 +373,8 @@ data, outflag = encode_and_normalize(app_df)
 
 print('this is the time before balancing:', time.time() - starttime)
 ###### balance the dataset - run one of these three methods
-aug_data, outflag = random_undersampling(data, desired_prevalence = 0.3)
-# aug_data, outflag = random_oversampling(data, desired_prevalence = 0.3)
+# aug_data, outflag = random_undersampling(data, desired_prevalence = 0.3)
+aug_data, outflag = random_oversampling(data, desired_prevalence = 0.35)
 # aug_data, outflag = smote(data, desired_prevalence = 0.3)
 print('this is the time after balancing:', time.time() - starttime)
 
