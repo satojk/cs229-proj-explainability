@@ -43,8 +43,8 @@ def curriculum_train(model, train_x, train_y, valid_x, valid_y, batch_size,
 def main():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print('Using device:', device)
-    (train_X, train_y) = utils.get_data_alt(MINI_PATH, remove_outliers=True, remove_correlated_columns=True, device=device)
-    (valid_X, valid_y) = utils.get_data_alt(VALID_PATH, remove_correlated_columns=True, device=device)
+    (train_X, train_y) = utils.get_data(MINI_PATH, remove_outliers=True, remove_correlated_columns=True, oversample=True, device=device)
+    (valid_X, valid_y) = utils.get_data(VALID_PATH, remove_correlated_columns=True, device=device)
     print('TRAIN SHAPES')
     print(train_X.shape)
     print(train_y.shape)

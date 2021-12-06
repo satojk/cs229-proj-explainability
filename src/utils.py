@@ -45,19 +45,28 @@ def train_valid_test_split():
     test.to_csv('../data/application_data_test.csv', index=False)
     mini.to_csv('../data/application_data_mini.csv', index=False)
 
-def get_data_alt(path, remove_outliers=False, remove_correlated_columns=False, device='cpu'):
+def get_data(path, remove_outliers=False, remove_correlated_columns=False,
+        oversample=False, device='cpu'):
     '''
     Load and preprocess the dataset.
 
     Arguments:
     -path: the file path for the dataset to be loaded and preprocessed.
+    -remove_outliers (default: False): flag for whether we want to remove
+    outliers on the dataset or not.
+    -remove_correlated_columns (default: False): flag for whether we want to
+    remove highly-correlated columns on the dataset or not.
+    -oversample (default: False): flag for whether we want to oversample
+    positive examples to balance the dataset or not.
+    -device (default: 'cpu'): what device to put the data in (e.g. cpu or cuda)
 
     Returns:
     2-tuple containing the X values and the y values of the dataset in the
     given path
     '''
     # TODO: We can probably do it cheaper without dataframes? This is currently
-    # copied straight out of Matheus's Collab notebook.
+    # copied straight out of Matheus's Collab notebook, with oversampling code
+    # by Nico
     app_df = pd.read_csv(path)
 
     if remove_outliers:
@@ -72,6 +81,23 @@ def get_data_alt(path, remove_outliers=False, remove_correlated_columns=False, d
 
     app_df = app_df.fillna(app_df.mean())
 
+    if oversample:
+        # separate all datapoints where target = 1, append them back onto the dataset multiple times
+        zero_vals = app_df.loc[app_df['TARGET'] == 0]
+        one_vals = app_df.loc[app_df['TARGET'] == 1]
+        num_ones = len(one_vals)
+        num_zeros = len(zero_vals)
+        diff_num = num_zeros - num_ones
+        #floor function is arbitrary, could also be ceil
+        duplicates2make = round(diff_num/num_ones) # 0 if a already 50%, 1 if num_ones is 25%, etc.
+
+        data_to_add = one_vals
+        for i in range(duplicates2make):
+          data_to_add = data_to_add.append(one_vals)
+
+        app_df = app_df.append(data_to_add)
+        app_df = app_df.sample(frac=1, random_state=0, ignore_index=True)
+
     # Drop ID
 
     app_df = app_df.drop('SK_ID_CURR', axis = 1)
@@ -84,39 +110,6 @@ def get_data_alt(path, remove_outliers=False, remove_correlated_columns=False, d
 
     X = torch.from_numpy(X).to(device)
     y = torch.from_numpy(y).to(device)
-
-    return X, y
-
-def get_data(path):
-    '''
-    Load and preprocess the dataset.
-
-    Arguments:
-    -path: the file path for the dataset to be loaded and preprocessed.
-
-    Returns:
-    2-tuple containing the X values and the y values of the dataset in the
-    given path
-    '''
-    # TODO: We can probably do it cheaper without dataframes? This is currently
-    # copied straight out of Matheus's Collab notebook.
-    app_df = pd.read_csv(path)
-
-    # Fill NaN
-
-    app_df = app_df.fillna(app_df.mean())
-
-    # Separate X and Y into arrays
-
-    X = app_df.drop('TARGET', axis = 1).values.astype('float32')
-    y = app_df.TARGET.values.astype('float32')
-
-    # Normalize X
-    sc = StandardScaler()
-    X = sc.fit_transform(X)
-
-    X = torch.from_numpy(X)
-    y = torch.from_numpy(y)
 
     return X, y
 
