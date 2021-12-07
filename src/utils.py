@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import StandardScaler
+from captum.attr import IntegratedGradients
 
 ALL_DATA_PATH = '../data/application_data.csv'
 
@@ -258,10 +259,49 @@ def load_nn(model, path):
     model.eval()
     return model
 
+def load_training_history(path):
+    with open(path, 'r') as f:
+        data = json.load(f)
+    return data
+
 def plot_training_history(path, to_remove=[]):
     data = pd.read_json(path, orient='columns')
     data = data.drop(to_remove, axis=1)
     print(data.head())
     sns.lineplot(x='epoch', y='metric values', hue='metrics', ci=None, data=data.melt('epoch',
         var_name='metrics', value_name='metric values'))
+    plt.show()
+
+def get_column_names(path, remove_correlated_columns=False):
+    df = pd.read_csv(path)
+    if remove_correlated_columns:
+        columns_to_remove = ['NAME_CONTRACT_TYPE_Cash loans', 'FLAG_OWN_CAR_N', 'FLAG_OWN_REALTY_N', 'CODE_GENDER_F', 'ORGANIZATION_TYPE_XNA', 'FLAG_EMP_PHONE', 'NAME_INCOME_TYPE_Pensioner', 'OBS_60_CNT_SOCIAL_CIRCLE', 'YEARS_BUILD_MEDI', 'FLOORSMIN_MEDI', 'FLOORSMAX_MEDI', 'ENTRANCES_MEDI', 'COMMONAREA_MEDI', 'ELEVATORS_MEDI', 'LIVINGAREA_MEDI', 'APARTMENTS_MEDI', 'BASEMENTAREA_MEDI', 'LIVINGAPARTMENTS_MEDI', 'YEARS_BEGINEXPLUATATION_MEDI', 'LANDAREA_AVG', 'NONLIVINGAPARTMENTS_MEDI', 'NONLIVINGAREA_MEDI', 'YEARS_BUILD_MEDI', 'YEARS_BUILD_MODE', 'FLOORSMAX_MEDI', 'FLOORSMIN_MODE', 'FLOORSMAX_MODE', 'AMT_GOODS_PRICE', 'ELEVATORS_MEDI', 'LANDAREA_MEDI', 'COMMONAREA_MEDI', 'ENTRANCES_MODE', 'ENTRANCES_MEDI', 'ELEVATORS_MODE', 'COMMONAREA_MODE', 'ENTRANCES_MODE', 'NONLIVINGAPARTMENTS_MEDI', 'BASEMENTAREA_MEDI', 'LIVINGAPARTMENTS_MEDI', 'APARTMENTS_MEDI', 'LIVINGAREA_MEDI', 'LANDAREA_MODE', 'NONLIVINGAREA_MEDI', 'APARTMENTS_MODE', 'BASEMENTAREA_MODE', 'LIVINGAREA_MODE', 'LIVINGAPARTMENTS_MODE', 'YEARS_BEGINEXPLUATATION_MODE', 'NONLIVINGAPARTMENTS_MODE', 'NONLIVINGAREA_MODE', 'YEARS_BEGINEXPLUATATION_MEDI', 'REGION_RATING_CLIENT_W_CITY']
+        df = df.drop(columns_to_remove, axis=1)
+    df = df.drop(['SK_ID_CURR', 'TARGET'], axis = 1)
+    return list(df.columns)
+
+def plot_integrated_gradients(model, data_path, features=None, device='cpu'):
+    data_X, data_y = get_data(data_path, remove_correlated_columns=True, device=device)
+    all_features = get_column_names(data_path, remove_correlated_columns=True)
+    ig = IntegratedGradients(model)
+    data_X.requires_grad = True
+    attr, delta = ig.attribute(data_X, target=0, return_convergence_delta=True)
+    attr = attr.detach().numpy()
+
+    importances = np.mean(attr, axis=0)
+    absolute_importances = np.abs(importances)
+    top_5_importances_ixes = absolute_importances.argsort()[-5:][::-1]
+    importances = importances[top_5_importances_ixes]
+    important_features = []
+    for ix in top_5_importances_ixes:
+            important_features.append(all_features[ix])
+
+    for ix, feature in enumerate(important_features):
+        print(feature, ": ", '%.3f'%(importances[ix]))
+    x_pos = (np.arange(len(important_features)))
+    plt.figure(figsize=(12,6))
+    plt.bar(x_pos, importances, align='center')
+    plt.xticks(x_pos, important_features, wrap=True)
+    plt.xlabel('Features')
+    plt.title('Integrated Gradients')
     plt.show()
